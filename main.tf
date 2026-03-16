@@ -1,22 +1,20 @@
-#--------------------------------------------------------------
-# Event Hub Namespace
-#--------------------------------------------------------------
-resource "azurerm_eventhub_namespace" "this" {
-  name                     = local.namespace_name
-  location                 = local.location
-  resource_group_name      = data.azurerm_resource_group.this.name
-  sku                      = var.sku
-  capacity                 = var.capacity
-  auto_inflate_enabled     = var.auto_inflate_enabled
-  maximum_throughput_units  = var.auto_inflate_enabled ? var.maximum_throughput_units : null
-  zone_redundant           = var.zone_redundant
-
-  tags = local.merged_tags
+data "azurerm_resource_group" "this" {
+  name = var.resource_group_name
 }
 
-#--------------------------------------------------------------
-# Event Hubs
-#--------------------------------------------------------------
+resource "azurerm_eventhub_namespace" "this" {
+  name                    = var.namespace_name
+  location                = var.location
+  resource_group_name     = data.azurerm_resource_group.this.name
+  sku                     = var.sku
+  capacity                = var.capacity
+  auto_inflate_enabled    = var.auto_inflate_enabled
+  maximum_throughput_units = var.auto_inflate_enabled ? var.maximum_throughput_units : null
+  zone_redundant          = var.zone_redundant
+
+  tags = var.tags
+}
+
 resource "azurerm_eventhub" "this" {
   for_each = var.event_hubs
 
@@ -37,20 +35,28 @@ resource "azurerm_eventhub" "this" {
       skip_empty_archives = capture_description.value.skip_empty_archives
 
       destination {
-        name                 = capture_description.value.destination.name
-        archive_name_format  = capture_description.value.destination.archive_name_format
-        blob_container_name  = capture_description.value.destination.blob_container_name
-        storage_account_id   = capture_description.value.destination.storage_account_id
+        name                = capture_description.value.destination.name
+        archive_name_format = capture_description.value.destination.archive_name_format
+        blob_container_name = capture_description.value.destination.blob_container_name
+        storage_account_id  = capture_description.value.destination.storage_account_id
       }
     }
   }
 }
 
-#--------------------------------------------------------------
-# Consumer Groups
-#--------------------------------------------------------------
 resource "azurerm_eventhub_consumer_group" "this" {
-  for_each = local.consumer_groups_map
+  for_each = {
+    for item in flatten([
+      for hub_key, hub in var.event_hubs : [
+        for cg_key, cg in hub.consumer_groups : {
+          key           = "${hub_key}-${cg_key}"
+          hub_key       = hub_key
+          cg_key        = cg_key
+          user_metadata = cg.user_metadata
+        }
+      ]
+    ]) : item.key => item
+  }
 
   name                = each.value.cg_key
   namespace_name      = azurerm_eventhub_namespace.this.name
@@ -59,9 +65,6 @@ resource "azurerm_eventhub_consumer_group" "this" {
   user_metadata       = each.value.user_metadata
 }
 
-#--------------------------------------------------------------
-# Namespace Authorization Rules
-#--------------------------------------------------------------
 resource "azurerm_eventhub_namespace_authorization_rule" "this" {
   for_each = var.authorization_rules
 
@@ -73,19 +76,16 @@ resource "azurerm_eventhub_namespace_authorization_rule" "this" {
   manage              = each.value.manage
 }
 
-#--------------------------------------------------------------
-# Private Endpoint
-#--------------------------------------------------------------
 resource "azurerm_private_endpoint" "this" {
   count = var.private_endpoint_enabled ? 1 : 0
 
-  name                = "${local.namespace_name}-pe"
-  location            = local.location
+  name                = "${var.namespace_name}-pe"
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.this.name
   subnet_id           = var.private_endpoint_subnet_id
 
   private_service_connection {
-    name                           = "${local.namespace_name}-psc"
+    name                           = "${var.namespace_name}-psc"
     private_connection_resource_id = azurerm_eventhub_namespace.this.id
     subresource_names              = ["namespace"]
     is_manual_connection           = false
@@ -100,5 +100,5 @@ resource "azurerm_private_endpoint" "this" {
     }
   }
 
-  tags = local.merged_tags
+  tags = var.tags
 }

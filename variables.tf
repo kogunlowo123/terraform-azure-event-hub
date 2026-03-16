@@ -1,5 +1,5 @@
 variable "resource_group_name" {
-  description = "Name of the resource group where Event Hub resources will be created."
+  description = "Name of the resource group for Event Hub resources."
   type        = string
 }
 
@@ -14,7 +14,7 @@ variable "namespace_name" {
 }
 
 variable "sku" {
-  description = "SKU tier for the Event Hub namespace. Valid values are Basic, Standard, and Premium."
+  description = "SKU tier for the Event Hub namespace (Basic, Standard, or Premium)."
   type        = string
   default     = "Standard"
 
@@ -25,7 +25,7 @@ variable "sku" {
 }
 
 variable "capacity" {
-  description = "Throughput units for the namespace (1-40 for Standard, 1-100 for Premium)."
+  description = "Throughput units for the namespace."
   type        = number
   default     = 1
 }
@@ -53,7 +53,7 @@ variable "event_hubs" {
   type = map(object({
     partition_count   = optional(number, 2)
     message_retention = optional(number, 1)
-    consumer_groups   = optional(map(object({
+    consumer_groups = optional(map(object({
       user_metadata = optional(string, null)
     })), {})
     capture = optional(object({
@@ -63,10 +63,10 @@ variable "event_hubs" {
       size_limit_in_bytes = optional(number, 314572800)
       skip_empty_archives = optional(bool, false)
       destination = object({
-        name                 = optional(string, "EventHubArchive.AzureBlockBlob")
-        archive_name_format  = string
-        blob_container_name  = string
-        storage_account_id   = string
+        name                = optional(string, "EventHubArchive.AzureBlockBlob")
+        archive_name_format = string
+        blob_container_name = string
+        storage_account_id  = string
       })
     }), null)
   }))
