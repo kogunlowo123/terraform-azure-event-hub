@@ -3,14 +3,14 @@ data "azurerm_resource_group" "this" {
 }
 
 resource "azurerm_eventhub_namespace" "this" {
-  name                    = var.namespace_name
-  location                = var.location
-  resource_group_name     = data.azurerm_resource_group.this.name
-  sku                     = var.sku
-  capacity                = var.capacity
-  auto_inflate_enabled    = var.auto_inflate_enabled
+  name                     = var.namespace_name
+  location                 = var.location
+  resource_group_name      = data.azurerm_resource_group.this.name
+  sku                      = var.sku
+  capacity                 = var.capacity
+  auto_inflate_enabled     = var.auto_inflate_enabled
   maximum_throughput_units = var.auto_inflate_enabled ? var.maximum_throughput_units : null
-  zone_redundant          = var.zone_redundant
+  zone_redundant           = var.zone_redundant
 
   tags = var.tags
 }
