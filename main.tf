@@ -10,7 +10,6 @@ resource "azurerm_eventhub_namespace" "this" {
   capacity                 = var.capacity
   auto_inflate_enabled     = var.auto_inflate_enabled
   maximum_throughput_units = var.auto_inflate_enabled ? var.maximum_throughput_units : null
-  zone_redundant           = var.zone_redundant
 
   tags = var.tags
 }
@@ -18,11 +17,10 @@ resource "azurerm_eventhub_namespace" "this" {
 resource "azurerm_eventhub" "this" {
   for_each = var.event_hubs
 
-  name                = each.key
-  namespace_name      = azurerm_eventhub_namespace.this.name
-  resource_group_name = data.azurerm_resource_group.this.name
-  partition_count     = each.value.partition_count
-  message_retention   = each.value.message_retention
+  name              = each.key
+  namespace_id      = azurerm_eventhub_namespace.this.id
+  partition_count   = each.value.partition_count
+  message_retention = each.value.message_retention
 
   dynamic "capture_description" {
     for_each = each.value.capture != null ? [each.value.capture] : []

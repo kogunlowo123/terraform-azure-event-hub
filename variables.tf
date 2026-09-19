@@ -42,12 +42,6 @@ variable "maximum_throughput_units" {
   default     = 0
 }
 
-variable "zone_redundant" {
-  description = "Enable zone redundancy for the namespace."
-  type        = bool
-  default     = false
-}
-
 variable "event_hubs" {
   description = "Map of Event Hubs to create within the namespace."
   type = map(object({

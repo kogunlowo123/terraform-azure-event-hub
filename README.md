@@ -62,7 +62,7 @@ module "event_hub" {
 | Name | Version |
 |------|---------|
 | terraform | >= 1.5.0 |
-| azurerm | >= 3.80.0 |
+| azurerm | >= 4.0.0 |
 
 ## License
 
